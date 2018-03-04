@@ -115,9 +115,7 @@ export default class TrisEngine extends EventHandler {
 
     setProperty(sKey, mValue) {
         this._mValueMap[sKey.substring(1)] = mValue;
-        if (sKey === "/board") {
-            this.notify("boardChanged", { board: mValue });
-        }
+        this.notify("propertyChanged", { property: sKey.substring(1), value: mValue });
     }
 
     setData(oData) {
