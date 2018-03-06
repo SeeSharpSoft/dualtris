@@ -32,10 +32,15 @@ export default class EventHandler {
         });
     }
 
-    notify(sEvent, oEvent) {
+    notify(sEvent, oPayload) {
         var aHandler = this._mEventMap[sEvent];
         if (!Array.isArray(aHandler)) {
             return;
+        }
+        var oEvent = {
+            name: sEvent,
+            sender: this,
+            data: oPayload
         }
         aHandler.forEach(function(oEntry) {
             try {

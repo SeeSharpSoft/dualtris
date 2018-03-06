@@ -86,13 +86,14 @@ const Constants = {
     },
 };
 
-export default class TrisEngine extends EventHandler {
+class TrisEngine extends EventHandler {
 
-    constructor(iNoOfColumns, iNoOfRows) {
+    constructor(iNoOfColumns, iNoOfRows, bUpsideDown) {
         super();
         this._mValueMap = {};
         this.noOfColumns = iNoOfColumns || Constants.NO_OF_COLUMNS;
         this.noOfRows = iNoOfRows || Constants.NO_OF_ROWS;
+        this.upsideDown = !!bUpsideDown;
         this.init();
     }
 
@@ -113,29 +114,35 @@ export default class TrisEngine extends EventHandler {
         return this._mValueMap[sKey.substring(1)];
     }
 
-    setProperty(sKey, mValue) {
+    setProperty(sKey, mValue, bSuppressEvent) {
         this._mValueMap[sKey.substring(1)] = mValue;
-        this.notify("propertyChanged", { property: sKey.substring(1), value: mValue });
+        if (!bSuppressEvent) {
+            this.notify("propertyChanged", { property: sKey.substring(1), value: mValue });
+        }
     }
 
     setData(oData) {
         this._mValueMap = oData;
     }
 
-    init() {
+    init(oBoard) {
         var oData = {
-            board: {
-                rows: []
-            },
             score: 0,
             lines: 0,
             block: this.createNewBlock(),
             state: Constants.GAME_STATE.NEW
         };
 
-        for(var rows = 0; rows < this.noOfRows; ++rows) {
-            oData.board.rows.push({ columns: this._getEmptyRow() });
+        if (!oBoard) {
+            oBoard = {
+                rows: []
+            }
+            for(var rows = 0; rows < this.noOfRows; ++rows) {
+                oBoard.rows.push({ columns: this._getEmptyRow() });
+            }
         }
+        
+        oData.board = oBoard;
 
         this.setData(oData);
     }
@@ -170,7 +177,7 @@ export default class TrisEngine extends EventHandler {
         var oBlock = {
             type: Constants.BLOCK[Object.keys(Constants.BLOCK)[Math.floor(Math.random() * 7 + 1)]],
             posX: this.noOfColumns / 2 - 1,
-            posY: 0,
+            posY: this.upsideDown ? this.noOfRows - 4 : 0,
             rotation: 0
         };
 
@@ -193,7 +200,12 @@ export default class TrisEngine extends EventHandler {
             // full line
             if(!bHasGap) {
                 oBoard.rows.splice(rows, 1);
-                oBoard.rows.unshift({ columns: this._getEmptyRow()});
+                if (this.upsideDown) {
+                    oBoard.rows.push({ columns: this._getEmptyRow()});
+                } else {
+                    oBoard.rows.unshift({ columns: this._getEmptyRow()});
+                }
+                
                 ++iRemovedLines;
             }
         }
@@ -240,9 +252,9 @@ export default class TrisEngine extends EventHandler {
         return true;
     }
 
-    startGame() {
+    startGame(oBoard) {
         this._bStop = false;
-        this.init();
+        this.init(oBoard);
         this.setProperty("/state", Constants.GAME_STATE.RUNNING);
         this.nextBlock();
         this._fSpeed = Constants.INITIAL_SPEED;
@@ -347,8 +359,12 @@ export default class TrisEngine extends EventHandler {
 
     blockDown() {
         return this._tryChangeBlock(function(oBlock) {
-            oBlock.posY++;
-        });
+            if (this.upsideDown) {
+                oBlock.posY--
+            } else {
+                oBlock.posY++
+            }
+        }.bind(this));
     }
 
     blockRotateLeft() {
@@ -375,3 +391,5 @@ export default class TrisEngine extends EventHandler {
         });
     }
 }
+
+export { Constants, TrisEngine }

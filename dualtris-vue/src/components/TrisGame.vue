@@ -7,7 +7,7 @@
       <button v-on:click="onPauseGame">Pause</button>
       <button v-on:click="onRestartGame">Restart</button>
     </div>
-    <tris-grid ref="myGrid" width="300px" height="600px" />
+    <tris-grid ref="myGrid" width="200px" height="800px" />
   </div>
 </template>
 
@@ -15,9 +15,9 @@
 /* eslint-disable */
 
 import TrisGrid from '@/components/TrisGrid'
-import TrisEngine from '@/TrisEngine'
+import TrisEngine from '@/DualtrisEngine'
 
-const NO_OF_ROWS = 20;
+const NO_OF_ROWS = 40;
 const NO_OF_COLUMNS = 10;
 
 let myTrisEngine = new TrisEngine(NO_OF_COLUMNS, NO_OF_ROWS);
@@ -31,8 +31,8 @@ export default {
     this.trisGrid.setDimensions(NO_OF_COLUMNS, NO_OF_ROWS);
     this.blockGrid.setDimensions(4, 4);
 
-    this.updateGrid(myTrisEngine.getProperty("/board"));
-    this.updateBlock(myTrisEngine.getProperty("/block"));
+    // this.updateGrid(myTrisEngine.getProperty("/board"));
+    // this.updateBlock(myTrisEngine.getProperty("/block"));
 
     myTrisEngine.subscribe("propertyChanged", this.onGameEvent, this);
     myTrisEngine.startGame();
@@ -67,35 +67,49 @@ export default {
       this.trisGrid.grid = aGrid;
     },
     onGameEvent: function(oEvent) {
-      switch (oEvent.property) {
+      switch (oEvent.data.property) {
         case "board":
-          this.updateGrid(oEvent.value);
-          break;
+          this.updateGrid(oEvent.data.value)
+          break
         case "score":
-          this.score = oEvent.value;
-          break;
+          this.score = oEvent.data.value
+          break
         case "lines":
-          this.lines = oEvent.value;
+          this.lines = oEvent.data.value
           break;
         case "state":
-          this.state = oEvent.value;
-          break;
+          this.state = oEvent.data.value
+          break
+        default:
+          console.log("Unhandled property change: ", oEvent.data.property)
       }
     },
     onKeyPressed: function(e) {
       e = e || window.event;
 
       if (e.keyCode == '38') {
-          myTrisEngine.blockRotateLeft();
+          myTrisEngine.getNormalTE().blockRotateLeft();
       }
       else if (e.keyCode == '40') {
-          myTrisEngine.blockDown();
+          myTrisEngine.getNormalTE().blockDown();
       }
       else if (e.keyCode == '37') {
-          myTrisEngine.blockLeft();
+          myTrisEngine.getNormalTE().blockLeft();
       }
       else if (e.keyCode == '39') {
-          myTrisEngine.blockRight();
+          myTrisEngine.getNormalTE().blockRight();
+      }
+      else if (e.keyCode == '83') {
+          myTrisEngine.getInverseTE().blockRotateLeft();
+      }
+      else if (e.keyCode == '87') {
+          myTrisEngine.getInverseTE().blockDown();
+      }
+      else if (e.keyCode == '65') {
+          myTrisEngine.getInverseTE().blockLeft();
+      }
+      else if (e.keyCode == '68') {
+          myTrisEngine.getInverseTE().blockRight();
       }
     },
     onPauseGame: function(e) {
